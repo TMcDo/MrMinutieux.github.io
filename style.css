@@ -1,0 +1,146 @@
+/* --- CONFIGURATION GÉNÉRALE --- */
+:root {
+    --bg-color: #0a0a14;
+    --primary-color: #00aaff;
+    --text-color: #e0e0e0;
+    --card-bg-color: #1a1a24;
+    --border-color: #2a2a3a;
+    --header-font: 'Titillium Web', sans-serif;
+    --body-font: 'Inter', sans-serif;
+}
+
+body {
+    margin: 0;
+    font-family: var(--body-font);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.site-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* --- EN-TÊTE ET NAVIGATION --- */
+.site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+    font-family: var(--header-font);
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+}
+
+.site-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 25px;
+}
+
+.site-nav a {
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 16px;
+    padding: 5px 0;
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.site-nav a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: var(--primary-color);
+    transition: width 0.3s ease;
+}
+
+.site-nav a:hover,
+.site-nav a.active {
+    color: #fff;
+}
+
+.site-nav a:hover::after,
+.site-nav a.active::after {
+    width: 100%;
+}
+
+/* --- CONTENU PRINCIPAL --- */
+.site-content {
+    padding: 40px 0;
+}
+
+h1, h2, h3 {
+    font-family: var(--header-font);
+    color: #fff;
+}
+
+h1 { font-size: 48px; margin-bottom: 20px; }
+h2 { font-size: 36px; margin-bottom: 15px; }
+
+p {
+    margin-bottom: 15px;
+}
+
+a {
+    color: var(--primary-color);
+}
+
+/* --- SECTION SPÉCIALE (pour la visualisation) --- */
+.feature-section {
+    background-color: var(--card-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 30px;
+    margin-top: 40px;
+}
+
+.feature-section h2 {
+    margin-top: 0;
+}
+
+.visualisation-container {
+    width: 100%;
+    height: 600px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.visualisation-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* --- PIED DE PAGE --- */
+.site-footer {
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 40px;
+    border-top: 1px solid var(--border-color);
+    font-size: 14px;
+    color: #888;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+    .site-header {
+        flex-direction: column;
+        gap: 20px;
+    }
+    h1 { font-size: 36px; }
+}
