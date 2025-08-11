@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini OS - Concept</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Orbitron', sans-serif;
+            overflow: hidden;
+            user-select: none;
+        }
+        .desktop-bg {
+            background-color: #1a1a2e;
+            background-image: 
+                radial-gradient(circle at 25% 25%, #1f2a40 2%, transparent 10%),
+                radial-gradient(circle at 75% 75%, #16213e 2%, transparent 10%);
+            background-size: 50px 50px;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+        }
+        .veins {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="p" patternTransform="rotate(45)" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 50,0 V 100 M 0,50 H 100" stroke="%230f3460" stroke-width="0.5" /></pattern></defs><rect width="100%" height="100%" fill="url(%23p)"/></svg>');
+            opacity: 0.1;
+            animation: pulse 20s infinite linear;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.1; }
+            50% { opacity: 0.2; }
+            100% { opacity: 0.1; }
+        }
+        .window {
+            background: rgba(20, 20, 40, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 191, 255, 0.4);
+            box-shadow: 0 0 25px rgba(0, 191, 255, 0.2), inset 0 0 15px rgba(0,0,0,0.5);
+            border-radius: 12px;
+            color: #e0e0e0;
+            position: absolute;
+            resize: both;
+            overflow: hidden;
+            min-width: 300px;
+            min-height: 200px;
+        }
+        .window-header {
+            background: rgba(0, 191, 255, 0.1);
+            padding: 8px 12px;
+            cursor: move;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 191, 255, 0.2);
+        }
+        .window-controls span {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 6px;
+            cursor: pointer;
+        }
+        .close { background-color: #ff5f57; }
+        .minimize { background-color: #ffbd2e; }
+        .maximize { background-color: #28c940; }
+
+        .taskbar {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 40, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 191, 255, 0.5);
+            border-radius: 15px;
+            padding: 8px;
+            display: flex;
+            gap: 10px;
+            box-shadow: 0 0 30px rgba(0, 191, 255, 0.3);
+        }
+        .taskbar-item {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: rgba(0, 191, 255, 0.1);
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .taskbar-item:hover {
+            background: rgba(0, 191, 255, 0.3);
+            border-color: rgba(0, 191, 255, 0.7);
+            transform: translateY(-5px);
+        }
+        .clock {
+            color: #00bfff;
+            text-shadow: 0 0 8px #00bfff;
+            font-size: 1.1rem;
+            padding: 0 15px;
+        }
+        #three-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .db-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(0, 191, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+        }
+        .db-item:last-child {
+            border-bottom: none;
+        }
+        .export-btn {
+            background-color: #0f3460;
+            border: 1px solid #00bfff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .export-btn:hover {
+            background-color: #00bfff;
+            color: #1a1a2e;
+            box-shadow: 0 0 15px #00bfff;
+        }
+        .english-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(20, 20, 40, 0.7);
+            color: #00bfff;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #00bfff;
+            cursor: pointer;
+            z-index: 100;
+        }
+        .english-content {
+            display: none;
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            background: rgba(20, 20, 40, 0.9);
+            color: #e0e0e0;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #00bfff;
+            max-width: 300px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="bg-gray-900">
+
+    <div class="desktop-bg"></div>
+    <div class="veins"></div>
+
+    <div class="english-toggle" onclick="toggleEnglish()">EN</div>
+    <div class="english-content" id="english-content">
+        <h3 class="font-bold mb-2">Gemini OS - Concept</h3>
+        <p class="text-sm">This is an interactive mockup of a desktop OS with a "metal bone" aesthetic.
+        <br>- Windows are draggable.
+        <br>- The central window contains an interactive 3D "artifact". You can rotate it with your mouse.
+        <br>- The database window showcases your idea of an exportable list of materials.
+        <br>- The taskbar at the bottom includes a clock and app icons.
+        </p>
+    </div>
+
+    <!-- Fenêtre 1: Visionneuse 3D -->
+    <div class="window" style="top: 10%; left: 30%; width: 500px; height: 400px;">
+        <div class="window-header">
+            <span>Artefact Central [G-Core]</span>
+            <div class="window-controls">
+                <span class="minimize"></span><span class="maximize"></span><span class="close"></span>
+            </div>
+        </div>
+        <div class="window-content h-full p-0 bg-black">
+            <div id="three-canvas-container" class="h-full w-full"></div>
+        </div>
+    </div>
+
+    <!-- Fenêtre 2: Base de données -->
+    <div class="window" style="top: 25%; left: 5%; width: 350px; height: 450px;">
+        <div class="window-header">
+            <span>Base de Données de Conception</span>
+             <div class="window-controls">
+                <span class="minimize"></span><span class="maximize"></span><span class="close"></span>
+            </div>
+        </div>
+        <div class="window-content p-2 flex flex-col h-full">
+            <div class="flex-grow overflow-y-auto">
+                <div class="db-item"><span>Bois</span> <span>[Organique]</span></div>
+                <div class="db-item"><span>Vis</span> <span>[Métal, Fixation]</span></div>
+                <div class="db-item"><span>Boulons</span> <span>[Métal, Fixation]</span></div>
+                <div class="db-item"><span>Écrous</span> <span>[Métal, Fixation]</span></div>
+                <div class="db-item"><span>Fer-angles</span> <span>[Métal, Structure]</span></div>
+                <div class="db-item"><span>Tubes Acier</span> <span>[Métal, Structure]</span></div>
+                <div class="db-item"><span>Tournevis</span> <span>[Outil, Main]</span></div>
+                <div class="db-item"><span>Clé à molette</span> <span>[Outil, Main]</span></div>
+                <div class="db-item"><span>Polymère composite</span> <span>[Synthétique]</span></div>
+                <div class="db-item"><span>Fibre de carbone</span> <span>[Synthétique, Structure]</span></div>
+            </div>
+            <div class="p-4 text-center">
+                <button class="export-btn">Exporter en .CSV</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Fenêtre 3: Notes -->
+    <div class="window" style="top: 50%; left: 65%; width: 400px; height: 250px;">
+        <div class="window-header">
+            <span>Journal de Bord</span>
+             <div class="window-controls">
+                <span class="minimize"></span><span class="maximize"></span><span class="close"></span>
+            </div>
+        </div>
+        <div class="window-content p-4">
+            <h4 class="text-cyan-400 font-bold">Projet: Gemini OS</h4>
+            <p class="text-sm mt-2">
+                <strong>Log 001:</strong> Initialisation du concept d'interface. L'esthétique "os métal" est prometteuse. Le noyau 3D est stable. Prochaine étape: intégrer des sons d'ambiance et des animations de transition plus complexes.
+            </p>
+        </div>
+    </div>
+
+    <!-- Barre des tâches -->
+    <div class="taskbar">
+        <div class="taskbar-item" title="Lanceur d'applications">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-400"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+        </div>
+        <div class="taskbar-item" title="Navigateur">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-400"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="21.17" y1="8" x2="12" y2="8"></line><line x1="3.95" y1="6.06" x2="8.54" y2="14"></line><line x1="10.88" y1="21.94" x2="15.46" y2="14"></line></svg>
+        </div>
+        <div class="taskbar-item" title="Terminal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-400"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+        </div>
+        <div class="taskbar-item flex items-center justify-center clock" id="clock">
+            10:30 PM
+        </div>
+    </div>
+
+    <script>
+        // --- Rendre les fenêtres déplaçables ---
+        const windows = document.querySelectorAll('.window');
+        windows.forEach(makeDraggable);
+
+        function makeDraggable(elmnt) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            const header = elmnt.querySelector(".window-header");
+            if (header) {
+                header.onmousedown = dragMouseDown;
+            }
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+        // --- Horloge ---
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false });
+            document.getElementById('clock').textContent = timeString;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- Scène 3D avec Three.js ---
+        let scene, camera, renderer, boneMesh;
+        
+        function initThree() {
+            const container = document.getElementById('three-canvas-container');
+            if (!container) return;
+
+            // Scène
+            scene = new THREE.Scene();
+
+            // Caméra
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.z = 5;
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            // Lumières
+            const ambientLight = new THREE.AmbientLight(0x404040, 2);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0x00bfff, 1.5);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+            const pointLight = new THREE.PointLight(0xffffff, 0.5);
+            pointLight.position.set(-5, -5, -5);
+            scene.add(pointLight);
+
+            // Matériau "Os Métal"
+            const material = new THREE.MeshStandardMaterial({
+                color: 0xc0c0c0, // Silver
+                metalness: 0.9,
+                roughness: 0.4,
+                envMapIntensity: 1,
+            });
+            
+            // Géométrie "Os" (combinaison de formes)
+            const boneGeometry = new THREE.Group();
+            
+            const mainShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 3, 32), material);
+            boneGeometry.add(mainShaft);
+
+            const end1 = new THREE.Mesh(new THREE.SphereGeometry(0.8, 32, 32), material);
+            end1.position.y = 1.5;
+            boneGeometry.add(end1);
+            
+            const end2 = new THREE.Mesh(new THREE.SphereGeometry(0.8, 32, 32), material);
+            end2.position.y = -1.5;
+            boneGeometry.add(end2);
+
+            for(let i=0; i<4; i++){
+                const torus = new THREE.Mesh(new THREE.TorusGeometry(1, 0.1, 16, 100), material);
+                torus.rotation.x = Math.PI / 2;
+                torus.rotation.y = i * (Math.PI / 4);
+                boneGeometry.add(torus);
+            }
+            
+            boneMesh = boneGeometry;
+            scene.add(boneMesh);
+
+            // Gestion du redimensionnement
+            window.addEventListener('resize', onWindowResize, false);
+            
+            // Contrôles Souris
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            container.addEventListener('mousedown', e => { isDragging = true; });
+            container.addEventListener('mouseup', e => { isDragging = false; });
+            container.addEventListener('mousemove', e => {
+                if (!isDragging) return;
+                const deltaMove = {
+                    x: e.offsetX - previousMousePosition.x,
+                    y: e.offsetY - previousMousePosition.y
+                };
+
+                boneMesh.rotation.y += deltaMove.x * 0.01;
+                boneMesh.rotation.x += deltaMove.y * 0.01;
+
+                previousMousePosition = { x: e.offsetX, y: e.offsetY };
+            });
+
+
+            animate();
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('three-canvas-container');
+            if (container) {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (boneMesh) {
+                boneMesh.rotation.x += 0.001;
+                boneMesh.rotation.y += 0.002;
+            }
+            renderer.render(scene, camera);
+        }
+
+        // --- Toggle Anglais ---
+        function toggleEnglish() {
+            const content = document.getElementById('english-content');
+            if (content.style.display === 'block') {
+                content.style.display = 'none';
+            } else {
+                content.style.display = 'block';
+            }
+        }
+        
+        // Démarrer la scène 3D après le chargement de la page
+        window.onload = initThree;
+    </script>
+</body>
+</html>
+
